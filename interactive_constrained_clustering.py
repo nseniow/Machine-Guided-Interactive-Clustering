@@ -1,3 +1,4 @@
+from calendar import c
 import numpy as np
 from active_semi_clustering.semi_supervised.pairwise_constraints import PCKMeans
 from active_semi_clustering.exceptions import InconsistentConstraintsException
@@ -9,8 +10,9 @@ from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
 import pandas as pd
 from pandas.api.types import is_object_dtype, is_bool_dtype
-from pyod.models.abod import ABOD
-from anomatools.anomaly_detection import INNE
+from image_generation import generate_image
+#from pyod.models.abod import ABOD
+#from anomatools.anomaly_detection import INNE
 
 def convert_problematic_data(data):
     '''
@@ -140,17 +142,20 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
     pickle.dump(numpy_data, open('interactive-constrained-clustering/src/model/temp/latest_numpy_data.sav', 'wb'))
     pickle.dump(df, open('interactive-constrained-clustering/src/model/temp/latest_df.sav', 'wb'))
 
+
+    generate_image(cluster_iter, 0,1)
+
     # ================Evaluate clustering model================
 
     labels = model.labels_
+    ###########################CHANGED
+    # #iNNE
+    # iNNEVal = INNE().fit(numpy_data).predict(numpy_data)[0]
+    # norm_inne_scores = map(lambda x, r=float(np.max(iNNEVal) - np.min(iNNEVal)): ((x - np.min(iNNEVal)) / r), iNNEVal)
 
-    #iNNE
-    iNNEVal = INNE().fit(numpy_data).predict(numpy_data)[0]
-    norm_inne_scores = map(lambda x, r=float(np.max(iNNEVal) - np.min(iNNEVal)): ((x - np.min(iNNEVal)) / r), iNNEVal)
-
-    #Angle-Based Outlier Detector
-    ABODVal = ABOD().fit(numpy_data).decision_scores_ 
-    norm_abod_scores = map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal)
+    # #Angle-Based Outlier Detector
+    # ABODVal = ABOD().fit(numpy_data).decision_scores_ 
+    # norm_abod_scores = map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal)
 
     #Isolation Forest Anomaly Score
     if_samp = IsolationForest(random_state=0).fit(numpy_data).score_samples(numpy_data)
@@ -183,7 +188,9 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
 
 
     #Take all the normalized metric arrays, determine the avg to provide for question determination
-    normalized_magic = [((v*0.20) + (w*0.20) + (x*0.20) + (y*0.20) + (z*0.20)) for v, w, x, y, z in zip(norm_sil, norm_nog, norm_if_scores, norm_abod_scores, norm_inne_scores)]
+    ##########################CHANGED
+    #normalized_magic = [((v*0.20) + (w*0.20) + (x*0.20) + (y*0.20) + (z*0.20)) for v, w, x, y, z in zip(norm_sil, norm_nog, norm_if_scores, norm_abod_scores, norm_inne_scores)]
+    normalized_magic = [((v*0.33) + (w*0.33) + (x*0.33)) for v, w, x in zip(norm_sil, norm_nog, norm_if_scores)]
 
     sorted_norm_magic = sorted(normalized_magic)
 
