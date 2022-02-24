@@ -12,6 +12,7 @@ import Col from 'react-bootstrap/Col'
 import { Card, Button } from 'react-bootstrap';
 
 import { MyTextInput, MyTextInputPercent } from "./textInput"
+import { MyCheckBoxInput } from "./checkBoxInput"
 
 class FileForm extends Component {
 
@@ -83,6 +84,16 @@ class FileForm extends Component {
                                             onSubmit={async values => {
                                                 values.filename = this.fileName
                                                 values.reduction_algorithm = document.getElementById("reduction_algorithm_select").value
+                                                var algorithmsUsed = []
+                                                var checkboxes = document.querySelectorAll('input[type=checkbox]')
+                                                for (var i = 0; i < checkboxes.length; i++) {
+                                                    if (checkboxes[i].checked){
+                                                        algorithmsUsed.push(1)
+                                                    }else{
+                                                        algorithmsUsed.push(0)
+                                                    }
+                                                }
+                                                values.algorithmsUsed = algorithmsUsed
                                                 context.verifiedInput()
                                                 if (values.questionsPerIteration % 2 !== 0) {
                                                     values.questionsPerIteration = parseInt(values.questionsPerIteration) - 1
@@ -130,6 +141,12 @@ class FileForm extends Component {
                                                             <option value="UMAP">UMAP</option>
                                                             <option value="PCA">PCA</option>
                                                         </select>
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col>
+                                                        Evaluation Algorithms:
+                                                        <MyCheckBoxInput/>
                                                     </Col>
                                                 </Row>
                                                 <Row className="align-middle align-items-center text-center">

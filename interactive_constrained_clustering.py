@@ -21,6 +21,13 @@ def convert_problematic_data(data):
     '''
     df = data.infer_objects() 
     category_columns = []
+    # Convert int datatypes to float datatypes
+    # This might be needed cause of the weird abod thingy
+    # for column in df:
+    #    if(df[column].dtype == "int64"):
+    #        df[column] = df[column].astype(float)
+    #        break
+
     # Determine which columns are categorical
     for column in df:
         if(df[column].dtype == "object"):
@@ -84,7 +91,7 @@ def find_nearest_neighbor(neighbors, numpy_data, value, labels, same_cluster, co
     raise IndexError("Unable to find another Sample to match "+ str(value[0]) +" with due to constraints.")
 
 
-def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints, reduction_algorithm):
+def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints, reduction_algorithm, evaluation_algorithms):
     '''
     Args:
         filename: name of the csv file
@@ -93,6 +100,7 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
         must_link_constraints: 
         cant_link_constraints:
         unknown_constraints:
+        evaluation_algorithms: 
     '''
     
     # ================Generate clustering model================
@@ -153,6 +161,8 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
     #Angle-Based Outlier Detector
     #ABODVal = ABOD().fit(numpy_data).decision_scores_ 
     #norm_abod_scores = map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal)
+    norm_abod_scores = norm_inne_scores
+    # This is just commented like this cause currently the ABOD doesn't work, once abod is fixed, remove line 164 and uncomment lines 162 and 163
 
     #Isolation Forest Anomaly Score
     if_samp = IsolationForest(random_state=0).fit(numpy_data).score_samples(numpy_data)
@@ -183,10 +193,9 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
             if avg_sil < avg_inc_sil:
                 sil_change_value = 4
 
-
     #Take all the normalized metric arrays, determine the avg to provide for question determination
-    #normalized_magic = [((v*0.20) + (w*0.20) + (x*0.20) + (y*0.20) + (z*0.20)) for v, w, x, y, z in zip(norm_sil, norm_nog, norm_if_scores, norm_abod_scores, norm_inne_scores)]
-    normalized_magic = [((v*0.33) + (w*0.33) + (x*0.33)) for v, w, x in zip(norm_sil, norm_nog, norm_if_scores)]
+    normalized_magic = [(v*int(evaluation_algorithms[0]) + w*int(evaluation_algorithms[1]) + x*int(evaluation_algorithms[2]) + y*int(evaluation_algorithms[3]) + z*int(evaluation_algorithms[4]))/evaluation_algorithms.count('1') 
+    for v, w, x, y, z in zip(norm_inne_scores, norm_abod_scores, norm_if_scores, norm_nog, norm_sil,)]
 
     sorted_norm_magic = sorted(normalized_magic)
 
@@ -251,5 +260,16 @@ ml = sys.argv[5].split(",")
 cl = sys.argv[6].split(",")
 unknown = sys.argv[7].split(",")
 reduction_algorithm = sys.argv[8]
+evaluation_algorithms = sys.argv[9].split(',')
 
-compute_questions(filename, cluster_iter, question_num, cluster_num, ml, cl, unknown, reduction_algorithm)
+# filename = 'Pokemon_no_string.csv'
+# cluster_iter = '1'
+# question_num = 4
+# cluster_num = 5
+# ml = []
+# cl = []
+# unknown = []
+# reduction_algorithm = "TSNE"
+# evaluation_algorithms = ['1','1','1','1','1']
+
+compute_questions(filename, cluster_iter, question_num, cluster_num, ml, cl, unknown, reduction_algorithm, evaluation_algorithms)

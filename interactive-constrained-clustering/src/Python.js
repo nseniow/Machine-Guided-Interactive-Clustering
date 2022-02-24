@@ -7,6 +7,7 @@ export class FormInput {
     cl = []
     unknown = []
     reduction_algorithm = ""
+    algorithmsUsed = []
 }
 
 export class Stats {

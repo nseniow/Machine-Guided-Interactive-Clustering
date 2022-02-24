@@ -81,6 +81,7 @@ class App extends Component {
       formData.append('cl', totalCL)
       formData.append('unknown', unknownC)
       formData.append('reduction_algorithm', this.state.formInput.reduction_algorithm)
+      formData.append('algorithm', this.state.formInput.algorithmsUsed)
       this.setState({
         formInput: {
           ...this.state.formInput,
