@@ -11,6 +11,7 @@ import pandas as pd
 from pandas.api.types import is_object_dtype, is_bool_dtype
 from pyod.models.abod import ABOD
 from anomatools.anomaly_detection import INNE
+from image_generation import generate_image
 
 def convert_problematic_data(data):
     '''
@@ -83,7 +84,7 @@ def find_nearest_neighbor(neighbors, numpy_data, value, labels, same_cluster, co
     raise IndexError("Unable to find another Sample to match "+ str(value[0]) +" with due to constraints.")
 
 
-def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints):
+def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints, reduction_algorithm):
     '''
     Args:
         filename: name of the csv file
@@ -132,19 +133,14 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
             raise TypeError("There exists a string values in the dataset that the tool was unable to handle properly.")
 
     # ================Generate graph for website================
+    
     labels = model.labels_
-    # Creation of graph for image.
-    # plt.style.use('dark_background') for landing page pic
-    plt.scatter(numpy_data[:, 0], numpy_data[:, 1], c=labels, s=10, cmap=plt.cm.RdBu)
-    plt.savefig("interactive-constrained-clustering/src/images/clusterImg" + cluster_iter, orientation='portrait')  # dpi=100 for landing page pic
-    # plt.savefig("interactive-constrained-clustering/src/images/clusterImg"+cluster_iter)
+    generate_image(cluster_iter, numpy_data, labels, reduction_algorithm)
 
-    # Save model and data for the image generation.
+    # ================Save the pickle================
+
     #dump(obj, open(filename, mode))
     pickle.dump(model, open('interactive-constrained-clustering/src/model/finalized_model.sav', 'wb'))
-    pickle.dump(model, open('interactive-constrained-clustering/src/model/temp/latest_model.sav', 'wb'))
-    pickle.dump(numpy_data, open('interactive-constrained-clustering/src/model/temp/latest_numpy_data.sav', 'wb'))
-    pickle.dump(df, open('interactive-constrained-clustering/src/model/temp/latest_df.sav', 'wb'))
 
     # ================Evaluate clustering model================
 
@@ -155,8 +151,8 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
     norm_inne_scores = map(lambda x, r=float(np.max(iNNEVal) - np.min(iNNEVal)): ((x - np.min(iNNEVal)) / r), iNNEVal)
 
     #Angle-Based Outlier Detector
-    ABODVal = ABOD().fit(numpy_data).decision_scores_ 
-    norm_abod_scores = map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal)
+    #ABODVal = ABOD().fit(numpy_data).decision_scores_ 
+    #norm_abod_scores = map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal)
 
     #Isolation Forest Anomaly Score
     if_samp = IsolationForest(random_state=0).fit(numpy_data).score_samples(numpy_data)
@@ -189,7 +185,8 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
 
 
     #Take all the normalized metric arrays, determine the avg to provide for question determination
-    normalized_magic = [((v*0.20) + (w*0.20) + (x*0.20) + (y*0.20) + (z*0.20)) for v, w, x, y, z in zip(norm_sil, norm_nog, norm_if_scores, norm_abod_scores, norm_inne_scores)]
+    #normalized_magic = [((v*0.20) + (w*0.20) + (x*0.20) + (y*0.20) + (z*0.20)) for v, w, x, y, z in zip(norm_sil, norm_nog, norm_if_scores, norm_abod_scores, norm_inne_scores)]
+    normalized_magic = [((v*0.33) + (w*0.33) + (x*0.33)) for v, w, x in zip(norm_sil, norm_nog, norm_if_scores)]
 
     sorted_norm_magic = sorted(normalized_magic)
 
@@ -253,5 +250,6 @@ cluster_num = int(sys.argv[4])
 ml = sys.argv[5].split(",")
 cl = sys.argv[6].split(",")
 unknown = sys.argv[7].split(",")
+reduction_algorithm = sys.argv[8]
 
-compute_questions(filename, cluster_iter, question_num, cluster_num, ml, cl, unknown)
+compute_questions(filename, cluster_iter, question_num, cluster_num, ml, cl, unknown, reduction_algorithm)

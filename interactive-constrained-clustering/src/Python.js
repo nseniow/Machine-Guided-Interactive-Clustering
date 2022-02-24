@@ -6,6 +6,7 @@ export class FormInput {
     ml = []
     cl = []
     unknown = []
+    reduction_algorithm = ""
 }
 
 export class Stats {

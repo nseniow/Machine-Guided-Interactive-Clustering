@@ -1,30 +1,44 @@
-import pickle
-import sys
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+import pandas as pd
+import umap
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
-def generate_image(cluster_iter, x_axis, y_axis):
-    '''
-    generates the graph image using the pickle objects saved at /ineractive-constrainted-clustering/src/model/temp/*.sav
-    saves the image to /interactive-constrained-clustering/src/images/cluterImgx.png
-    '''
+def generate_image(cluster_iter, numpy_data, labels, reduction_algorithm):
 
-    model = pickle.load(open('interactive-constrained-clustering/src/model/temp/latest_model.sav', 'rb'))
-    df = pickle.load(open('interactive-constrained-clustering/src/model/temp/latest_df.sav', 'rb'))
-    numpy_data = pickle.load(open('interactive-constrained-clustering/src/model/temp/latest_numpy_data.sav', 'rb'))
-    labels = model.labels_
-    plt.scatter(numpy_data[:, x_axis], numpy_data[:, y_axis], c=labels, s=10, cmap=plt.cm.Set1)
-    plt.xlabel(df.columns[x_axis])
-    plt.ylabel(df.columns[y_axis])
-    plt.savefig("interactive-constrained-clustering/src/images/clusterImg" + cluster_iter, orientation='portrait')  # dpi=100 for landing page pic
+    if reduction_algorithm == "TSNE":
+        tsne = TSNE()
+        X_embedded = tsne.fit_transform(numpy_data)
+        
+        plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=labels)
+        plt.title("TSNE")
+        plt.gca().set_aspect('equal', 'datalim')
+        plt.savefig("interactive-constrained-clustering/src/images/clusterImg" + cluster_iter, orientation='portrait')  # dpi=100 for landing page pic
 
-'''
-clustering_iter - to support the naming of the clustering in images.
-'''
+    elif reduction_algorithm == "PCA":
+        pca = PCA(n_components=2) 
+        principalComponents = pca.fit_transform(numpy_data)
+        principalDf = pd.DataFrame(data = principalComponents).to_numpy()
 
-# Handle incoming values from program call.
-print(sys.argv)
-cluster_iter = sys.argv[1]
-x_axis = int(sys.argv[2])
-y_axis = int(sys.argv[3])
+        plt.scatter(principalDf[:, 0], principalDf[:, 1], c=labels)
+        plt.title("PCA")
+        plt.gca().set_aspect('equal', 'datalim')
+        plt.savefig("interactive-constrained-clustering/src/images/clusterImg" + cluster_iter, orientation='portrait')  # dpi=100 for landing page pic
 
-generate_image(cluster_iter, x_axis, y_axis)
+    elif reduction_algorithm == "UMAP":
+        reducer = umap.UMAP()
+        scaled_data = StandardScaler().fit_transform(numpy_data)
+        embedding =  reducer.fit_transform(scaled_data)
+
+        plt.scatter(embedding[:, 0], embedding[:, 1], c=labels)
+        plt.title("UMAP")
+        plt.gca().set_aspect('equal', 'datalim')
+        plt.savefig("interactive-constrained-clustering/src/images/clusterImg" + cluster_iter, orientation='portrait')  # dpi=100 for landing page pic
+    
+    else:
+        raise ValueError("Unknown algorithm")
