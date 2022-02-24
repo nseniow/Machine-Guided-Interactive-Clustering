@@ -82,6 +82,7 @@ class FileForm extends Component {
                                             })}
                                             onSubmit={async values => {
                                                 values.filename = this.fileName
+                                                values.reduction_algorithm = document.getElementById("reduction_algorithm_select").value
                                                 context.verifiedInput()
                                                 if (values.questionsPerIteration % 2 !== 0) {
                                                     values.questionsPerIteration = parseInt(values.questionsPerIteration) - 1
@@ -119,6 +120,16 @@ class FileForm extends Component {
                                                             name="maxConstraintPercent"
                                                             placeholder="">
                                                         </MyTextInputPercent>
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col>
+                                                        <div>Dimensionality Reduction Algorithm for Visualization</div>
+                                                        <select id="reduction_algorithm_select">
+                                                            <option value="TSNE">TSNE</option>
+                                                            <option value="UMAP">UMAP</option>
+                                                            <option value="PCA">PCA</option>
+                                                        </select>
                                                     </Col>
                                                 </Row>
                                                 <Row className="align-middle align-items-center text-center">

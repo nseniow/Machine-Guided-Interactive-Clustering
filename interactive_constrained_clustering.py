@@ -84,7 +84,7 @@ def find_nearest_neighbor(neighbors, numpy_data, value, labels, same_cluster, co
     raise IndexError("Unable to find another Sample to match "+ str(value[0]) +" with due to constraints.")
 
 
-def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints):
+def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints, reduction_algorithm):
     '''
     Args:
         filename: name of the csv file
@@ -135,7 +135,7 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
     # ================Generate graph for website================
     
     labels = model.labels_
-    generate_image(cluster_iter, numpy_data, labels, "TSNE")
+    generate_image(cluster_iter, numpy_data, labels, reduction_algorithm)
 
     # ================Save the pickle================
 
@@ -250,5 +250,6 @@ cluster_num = int(sys.argv[4])
 ml = sys.argv[5].split(",")
 cl = sys.argv[6].split(",")
 unknown = sys.argv[7].split(",")
+reduction_algorithm = sys.argv[8]
 
-compute_questions(filename, cluster_iter, question_num, cluster_num, ml, cl, unknown)
+compute_questions(filename, cluster_iter, question_num, cluster_num, ml, cl, unknown, reduction_algorithm)

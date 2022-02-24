@@ -5,3 +5,4 @@
 
 *.sav
 *.png
+/__pycache__
