@@ -140,11 +140,6 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
             print(1)
             raise TypeError("There exists a string values in the dataset that the tool was unable to handle properly.")
 
-    # ================Generate graph for website================
-    
-    labels = model.labels_
-    generate_image(cluster_iter, numpy_data, labels, reduction_algorithm)
-
     # ================Save the pickle================
 
     #dump(obj, open(filename, mode))
@@ -154,31 +149,47 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
 
     labels = model.labels_
 
+    evaluation_scores = {}
+
     #iNNE
     iNNEVal = INNE().fit(numpy_data).predict(numpy_data)[0]
-    norm_inne_scores = map(lambda x, r=float(np.max(iNNEVal) - np.min(iNNEVal)): ((x - np.min(iNNEVal)) / r), iNNEVal)
+    norm_inne_scores = list(map(lambda x, r=float(np.max(iNNEVal) - np.min(iNNEVal)): ((x - np.min(iNNEVal)) / r), iNNEVal))
+    
+    if evaluation_algorithms[0] == '1': 
+        evaluation_scores['iNNE'] = sum(norm_inne_scores)/len(norm_inne_scores)
 
     #Angle-Based Outlier Detector
     #ABODVal = ABOD().fit(numpy_data).decision_scores_ 
-    #norm_abod_scores = map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal)
+    #norm_abod_scores = list(map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal))
     norm_abod_scores = norm_inne_scores
     # This is just commented like this cause currently the ABOD doesn't work, once abod is fixed, remove line 164 and uncomment lines 162 and 163
+    
+    if evaluation_algorithms[1] == '1': 
+        evaluation_scores['ABOD'] = sum(list(norm_abod_scores))/len(list(norm_abod_scores))
 
     #Isolation Forest Anomaly Score
     if_samp = IsolationForest(random_state=0).fit(numpy_data).score_samples(numpy_data)
-    norm_if_scores = map(lambda x, r=float(np.max(if_samp) - np.min(if_samp)): ((x - np.min(if_samp)) / r), if_samp)
+    norm_if_scores = list(map(lambda x, r=float(np.max(if_samp) - np.min(if_samp)): ((x - np.min(if_samp)) / r), if_samp))
+    
+    if evaluation_algorithms[2] == '1': 
+        evaluation_scores['IF'] = sum(norm_if_scores)/len(norm_if_scores)
 
     #Local Outlier Factor
     neg_out_arr = LocalOutlierFactor().fit(numpy_data).negative_outlier_factor_
-    norm_nog = map(lambda x, r=float(np.max(neg_out_arr) - np.min(neg_out_arr)): ((x - np.min(neg_out_arr)) / r), neg_out_arr)
+    norm_nog = list(map(lambda x, r=float(np.max(neg_out_arr) - np.min(neg_out_arr)): ((x - np.min(neg_out_arr)) / r), neg_out_arr))
+    
+    if evaluation_algorithms[3] == '1': 
+        evaluation_scores['LOF'] = sum(norm_nog)/len(norm_nog)
 
     #Sihlouette
     # Passing my data (data) and the certain cluster that each data point from X should be based on our model.
     sil_arr = metrics.silhouette_samples(numpy_data, labels)
-    sorted_sil_arr = sorted(sil_arr)
-    norm_sil = map(lambda x, r=float(np.max(sil_arr) - np.min(sil_arr)): ((x - np.min(sil_arr)) / r), sil_arr)
+    norm_sil = list(map(lambda x, r=float(np.max(sil_arr) - np.min(sil_arr)): ((x - np.min(sil_arr)) / r), sil_arr))
+    
+    if evaluation_algorithms[4] == '1': 
+        evaluation_scores['SIL'] = sum(norm_sil)/len(norm_sil)
 
-    avg_sil = sum(sorted_sil_arr)/len(sorted_sil_arr)
+    avg_sil = evaluation_scores['SIL']
     #cluster+1 and cluster-1 portion for silhoutte. Determine if we must flag the notif in front-end app. 
     sil_change_value = 0
     if int(cluster_iter) != 1:
@@ -208,6 +219,11 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
     #Max
     print(sorted_norm_magic[-1])
     print("SEPERATOR")
+
+    # ================Generate graph for website================
+    
+    labels = model.labels_
+    generate_image(cluster_iter, numpy_data, labels, reduction_algorithm, cluster_num, evaluation_scores)
 
     # ================Decide what questions to ask clustering model================
 

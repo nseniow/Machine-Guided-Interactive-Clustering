@@ -13,9 +13,16 @@ import Notification from '../../notification'
 
 export const Questions = () => {
     const { promiseInProgress } = usePromiseTracker()
-    function handleImagePassing(count) {
+    function handleScatterPlotImagePassing(count) {
         try {
             return require("../../../images/clusterImg" + count + ".png").default
+        } catch (error) {
+            console.log("Image Error")
+        }
+    }
+    function handleRadarPlotImagePassing(count) {
+        try {
+            return require("../../../images/radarPlot" + count + ".png").default
         } catch (error) {
             console.log("Image Error")
         }
@@ -42,7 +49,14 @@ export const Questions = () => {
                                         <ChartSlot
                                             iteration={context.iterationCount}
                                             // imgSrc={"../../images/clusterImg" + context.iterationCount + ".png"}>
-                                            imgSrc={handleImagePassing(context.iterationCount)}>
+                                            imgSrc={handleScatterPlotImagePassing(context.iterationCount)}>
+                                        </ChartSlot>
+                                    </Col>
+                                    <Col xs={3}>
+                                        <ChartSlot
+                                            // iteration={context.iterationCount}
+                                            // imgSrc={"../../images/clusterImg" + context.iterationCount + ".png"}>
+                                            imgSrc={handleRadarPlotImagePassing(context.iterationCount)}>
                                         </ChartSlot>
                                     </Col>
                                     <Col>

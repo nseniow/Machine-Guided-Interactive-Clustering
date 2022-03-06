@@ -12,15 +12,15 @@ export const MyCheckBoxInput = (props) => {
         <div className="input-group input-group-append rounded-right ">
             <div>
                 <label style={{marginRight: '1em'}}>
-                    <input type="checkbox" class="radio" id="INNE" value="INNE" /> iNNE  </label>
+                    <input type="checkbox" class="radio" id="INNE" value="INNE" checked="true"/> iNNE  </label>
                 <label style={{marginRight: '1em'}}>
-                    <input type="checkbox" class="radio" id="ABOD" value="ABOD" /> ABOD  </label>
+                    <input type="checkbox" class="radio" id="ABOD" value="ABOD" checked="true"/> ABOD  </label>
                 <label style={{marginRight: '1em'}}>
-                    <input type="checkbox" class="radio" id="IF" value="IF" /> Isolation Forest  </label>
+                    <input type="checkbox" class="radio" id="IF" value="IF" checked="true"/> Isolation Forest  </label>
                 <label style={{marginRight: '1em'}}>
-                    <input type="checkbox" class="radio" id="LOF" value="LOF" /> LOF  </label>
+                    <input type="checkbox" class="radio" id="LOF" value="LOF" checked="true"/> LOF  </label>
                 <label style={{marginRight: '1em'}}>
-                    <input type="checkbox" class="radio" id="SIL" value="SIL" /> Sihlouette  </label>
+                    <input type="checkbox" class="radio" id="SIL" value="SIL" checked="true"/> Sihlouette  </label>
             </div>
         </div>            
     );
