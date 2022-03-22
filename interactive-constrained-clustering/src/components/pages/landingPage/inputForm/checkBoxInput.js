@@ -14,7 +14,7 @@ export const MyCheckBoxInput = (props) => {
                 <label style={{marginRight: '1em'}}>
                     <input type="checkbox" class="radio" id="INNE" value="INNE" checked="true"/> iNNE  </label>
                 <label style={{marginRight: '1em'}}>
-                    <input type="checkbox" class="radio" id="ABOD" value="ABOD" checked="true"/> ABOD  </label>
+                    <input type="checkbox" class="radio" id="COPOD" value="COPOD" checked="true"/> COPOD  </label>
                 <label style={{marginRight: '1em'}}>
                     <input type="checkbox" class="radio" id="IF" value="IF" checked="true"/> Isolation Forest  </label>
                 <label style={{marginRight: '1em'}}>

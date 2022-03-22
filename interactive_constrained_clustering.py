@@ -1,16 +1,23 @@
-import numpy as np
-from active_semi_clustering.semi_supervised.pairwise_constraints import PCKMeans
-from active_semi_clustering.exceptions import InconsistentConstraintsException
-import matplotlib.pyplot as plt
 import sys
 import pickle
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from sklearn import datasets, metrics
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
-import pandas as pd
+from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score
+
 from pandas.api.types import is_object_dtype, is_bool_dtype
-from pyod.models.abod import ABOD
+from pyod.models.copod import COPOD
+
+from active_semi_clustering.semi_supervised.pairwise_constraints import PCKMeans
+from active_semi_clustering.exceptions import InconsistentConstraintsException
+
 from anomatools.anomaly_detection import INNE
+
 from image_generation import generate_image
 
 def convert_problematic_data(data):
@@ -36,6 +43,7 @@ def convert_problematic_data(data):
         elif(df[column].dtype == "bool"):
             df = df.drop(columns=[column]) #Drop these too for now
     #TODO: One hot encoding
+
     return df
 
 def create_constraint(links):
@@ -90,6 +98,74 @@ def find_nearest_neighbor(neighbors, numpy_data, value, labels, same_cluster, co
     print(3)
     raise IndexError("Unable to find another Sample to match "+ str(value[0]) +" with due to constraints.")
 
+def evaluate_model(model, numpy_data, evaluation_algorithms, cluster_iter):
+    '''
+    Evaluates the clustering model with several metrics
+    Returns a dictionary of the different scores as well as a list of normalized MAGIC scores for each data point
+    The evaluation algorithms being used will only effect the MAGIC score and not the dictionary with scores
+    '''
+    # ================Evaluate clustering model================
+
+    labels = model.labels_
+
+    evaluation_scores = {}
+
+    #iNNE
+    iNNEVal = INNE().fit(numpy_data).predict(numpy_data)[0]
+    norm_inne_scores = list(map(lambda x, r=float(np.max(iNNEVal) - np.min(iNNEVal)): (1 - (x - np.min(iNNEVal)) / r), iNNEVal))
+    
+    evaluation_scores['iNNE'] = sum(norm_inne_scores)/len(norm_inne_scores)
+
+    #COPOD
+    copod_scores = COPOD().fit(numpy_data).decision_scores_
+    norm_copod_scores = list(map(lambda x, r=float(np.max(copod_scores) - np.min(copod_scores)): (1 - (x - np.min(copod_scores)) / r), copod_scores))
+
+    evaluation_scores['COPOD'] = sum(norm_copod_scores)/len(copod_scores)
+
+    #Isolation Forest Anomaly Score
+    if_samp = IsolationForest(random_state=0).fit(numpy_data).score_samples(numpy_data)
+    norm_if_scores = list(map(lambda x, r=float(np.max(if_samp) - np.min(if_samp)): ((x - np.min(if_samp)) / r), if_samp))
+    
+    evaluation_scores['IF'] = sum(norm_if_scores)/len(norm_if_scores)
+
+    #Local Outlier Factor
+    neg_out_arr = LocalOutlierFactor().fit(numpy_data).negative_outlier_factor_
+    norm_nog = list(map(lambda x, r=float(np.max(neg_out_arr) - np.min(neg_out_arr)): ((x - np.min(neg_out_arr)) / r), neg_out_arr))
+    
+    evaluation_scores['LOF'] = sum(norm_nog)/len(norm_nog)
+
+    #Sihlouette
+    # Passing my data (data) and the certain cluster that each data point from X should be based on our model.
+    sil_arr = metrics.silhouette_samples(numpy_data, labels)
+    norm_sil = list(map(lambda x, r=float(np.max(sil_arr) - np.min(sil_arr)): ((x - np.min(sil_arr)) / r), sil_arr))
+    
+    evaluation_scores['SIL'] = sum(norm_sil)/len(norm_sil)
+
+    #Davies-Bouldin
+    #TODO this one is fucked because lower is better for this score but I don't know what the theoretical maximum score is to do (max - score/max) with
+    # We gonna have to read through the wikipedia or something to figure that out
+    davies_bouldin_index = 1 - davies_bouldin_score(numpy_data, labels)
+    evaluation_scores['DB'] = davies_bouldin_index
+
+    #Calinski-Harabasz
+    calinski_harabasz_index = calinski_harabasz_score(numpy_data, labels)
+
+    # If cluster_iter = 1 then we save the Calinski-Harabasz score to a file that we can read later to get the +- bounds
+    # Else we map the value to between 0 and 1 where 0 and 1 are +- 10% of the original value
+    if int(cluster_iter) == 1:
+        pickle.dump(calinski_harabasz_index, open('interactive-constrained-clustering/src/model/ch.sav', 'wb'))
+        evaluation_scores['Calinski-Harabasz'] = 0.5
+    else:
+        old_score = pickle.load(open('interactive-constrained-clustering/src/model/ch.sav', 'rb'))
+        evaluation_scores['Calinski-Harabasz'] = (calinski_harabasz_index - (old_score - old_score * 0.1))/((old_score + old_score * 0.1) - (old_score - old_score * 0.1))
+
+    #evaluation_scores['Calinski-Harabasz'] = calinski_harabasz_index
+
+    #Take all the normalized metric arrays, determine the avg to provide for question determination
+    normalized_magic = [(v*int(evaluation_algorithms[0]) + w*int(evaluation_algorithms[1]) + x*int(evaluation_algorithms[2]) + y*int(evaluation_algorithms[3]) + z*int(evaluation_algorithms[4]))/evaluation_algorithms.count('1') 
+    for v, w, x, y, z in zip(norm_inne_scores, norm_copod_scores, norm_if_scores, norm_nog, norm_sil)]
+
+    return evaluation_scores, normalized_magic
 
 def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints, reduction_algorithm, evaluation_algorithms):
     '''
@@ -147,66 +223,29 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
 
     # ================Evaluate clustering model================
 
-    labels = model.labels_
-
-    evaluation_scores = {}
-
-    #iNNE
-    iNNEVal = INNE().fit(numpy_data).predict(numpy_data)[0]
-    norm_inne_scores = list(map(lambda x, r=float(np.max(iNNEVal) - np.min(iNNEVal)): ((x - np.min(iNNEVal)) / r), iNNEVal))
+    evaluation_scores, normalized_magic = evaluate_model(model, numpy_data, evaluation_algorithms, cluster_iter)
+    avg_magic = sum(normalized_magic)/len(normalized_magic)
     
-    if evaluation_algorithms[0] == '1': 
-        evaluation_scores['iNNE'] = sum(norm_inne_scores)/len(norm_inne_scores)
+    # Suggest +- 1 clusters if the magic score will improve
 
-    #Angle-Based Outlier Detector
-    #ABODVal = ABOD().fit(numpy_data).decision_scores_ 
-    #norm_abod_scores = list(map(lambda x, r=float(np.max(ABODVal) - np.min(ABODVal)): ((x - np.min(ABODVal)) / r), ABODVal))
-    norm_abod_scores = norm_inne_scores
-    # This is just commented like this cause currently the ABOD doesn't work, once abod is fixed, remove line 164 and uncomment lines 162 and 163
-    
-    if evaluation_algorithms[1] == '1': 
-        evaluation_scores['ABOD'] = sum(list(norm_abod_scores))/len(list(norm_abod_scores))
-
-    #Isolation Forest Anomaly Score
-    if_samp = IsolationForest(random_state=0).fit(numpy_data).score_samples(numpy_data)
-    norm_if_scores = list(map(lambda x, r=float(np.max(if_samp) - np.min(if_samp)): ((x - np.min(if_samp)) / r), if_samp))
-    
-    if evaluation_algorithms[2] == '1': 
-        evaluation_scores['IF'] = sum(norm_if_scores)/len(norm_if_scores)
-
-    #Local Outlier Factor
-    neg_out_arr = LocalOutlierFactor().fit(numpy_data).negative_outlier_factor_
-    norm_nog = list(map(lambda x, r=float(np.max(neg_out_arr) - np.min(neg_out_arr)): ((x - np.min(neg_out_arr)) / r), neg_out_arr))
-    
-    if evaluation_algorithms[3] == '1': 
-        evaluation_scores['LOF'] = sum(norm_nog)/len(norm_nog)
-
-    #Sihlouette
-    # Passing my data (data) and the certain cluster that each data point from X should be based on our model.
-    sil_arr = metrics.silhouette_samples(numpy_data, labels)
-    norm_sil = list(map(lambda x, r=float(np.max(sil_arr) - np.min(sil_arr)): ((x - np.min(sil_arr)) / r), sil_arr))
-    
-    if evaluation_algorithms[4] == '1': 
-        evaluation_scores['SIL'] = sum(norm_sil)/len(norm_sil)
-
-    avg_sil = evaluation_scores['SIL']
     #cluster+1 and cluster-1 portion for silhoutte. Determine if we must flag the notif in front-end app. 
     sil_change_value = 0
     if int(cluster_iter) != 1:
-        avg_inc_sil = sum(cluster_inc_sil_arr)/len(cluster_inc_sil_arr)
+        _, normalized_magic_inc = evaluate_model(clusters_inc_model, numpy_data, evaluation_algorithms, cluster_iter)
+        avg_inc = sum(normalized_magic_inc)/len(normalized_magic_inc)
         if int(cluster_num) > 2:
-            avg_dec_sil = sum(cluster_dec_sil_arr)/len(cluster_dec_sil_arr)
-            if avg_sil < avg_inc_sil and avg_dec_sil < avg_inc_sil:
+            _, normalized_magic_dec = evaluate_model (clusters_dec_model, numpy_data, evaluation_algorithms, cluster_iter)
+            avg_dec = sum(cluster_dec_sil_arr)/len(cluster_dec_sil_arr)
+            # Increase clusters
+            if avg_magic < avg_inc and avg_dec < avg_inc:
                 sil_change_value = 4
-            elif avg_sil < avg_dec_sil and avg_inc_sil < avg_dec_sil:
+            # Decrease clusters
+            elif avg_magic < avg_dec and avg_inc < avg_dec:
                 sil_change_value = 5
         else:
-            if avg_sil < avg_inc_sil:
+            # Increase clusters
+            if avg_magic < avg_inc:
                 sil_change_value = 4
-
-    #Take all the normalized metric arrays, determine the avg to provide for question determination
-    normalized_magic = [(v*int(evaluation_algorithms[0]) + w*int(evaluation_algorithms[1]) + x*int(evaluation_algorithms[2]) + y*int(evaluation_algorithms[3]) + z*int(evaluation_algorithms[4]))/evaluation_algorithms.count('1') 
-    for v, w, x, y, z in zip(norm_inne_scores, norm_abod_scores, norm_if_scores, norm_nog, norm_sil,)]
 
     sorted_norm_magic = sorted(normalized_magic)
 
@@ -251,11 +290,6 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
     print(question_set)
     print("SEPERATOR")
     print(sil_change_value)
-
-    # print the column names so the ui can populate the drop down menus
-    print("SEPERATOR")
-    print(list(df.columns.values))
-    
 
 
 '''

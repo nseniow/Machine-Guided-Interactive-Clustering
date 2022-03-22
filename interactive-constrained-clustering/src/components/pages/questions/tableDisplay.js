@@ -8,7 +8,7 @@ class TableDisplay extends Component {
     static getInstance = () => TableDisplay.instance;
     constructor(props) {
         super(props)
-        this.dataArr = props.dataArr.data
+        this.dataArr = props.dataArr.data.slice(1)
         this.set = props.set
         this.featuresArr = props.dataArr.data[0]
         this.state = {
