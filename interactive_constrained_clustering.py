@@ -1,5 +1,7 @@
 import sys
 import pickle
+from multiprocessing.pool import ThreadPool
+import time
 
 import numpy as np
 import pandas as pd
@@ -167,6 +169,15 @@ def evaluate_model(model, numpy_data, evaluation_algorithms, cluster_iter):
 
     return evaluation_scores, normalized_magic
 
+def fit_model(model, numpy_data, ml=[], cl=[]):
+    '''
+    Fits the model to the data and returns the model
+    This is in its own method so that I can call it asynchronously
+    '''
+    model.fit(numpy_data, ml, cl)
+
+    return model
+
 def compute_questions(filename, cluster_iter, question_num, cluster_num, must_link_constraints, cant_link_constraints, unknown_constraints, reduction_algorithm, evaluation_algorithms):
     '''
     Args:
@@ -193,20 +204,26 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
         # Applying new constraints to the model
         model = PCKMeans(n_clusters=cluster_num)
         try:
-            model.fit(numpy_data, ml=ml, cl=cl)
+            #Create each model in its own thread to save time
+            pool = ThreadPool(processes=3)
+            model_result = pool.apply_async(fit_model, (model, numpy_data, ml, cl))
+
+            clusters_inc_model = PCKMeans(n_clusters=cluster_num+1)
+            model_inc_result = pool.apply_async(fit_model, (clusters_inc_model, numpy_data, ml, cl))
+
+            if cluster_num > 2:
+                clusters_dec_model = PCKMeans(n_clusters=cluster_num-1)
+                model_dec_result = pool.apply_async(fit_model, (clusters_dec_model, numpy_data, ml, cl))
+
+            model = model_result.get()
+            clusters_inc_model = model_inc_result.get()
+            if cluster_num > 2:
+                clusters_dec_model = model_dec_result.get()
+
         except InconsistentConstraintsException:
             # Error 2 sent to client to handle properly.
             print(2)
             raise InconsistentConstraintsException("Inconsistent constraints")
-        clusters_inc_model = PCKMeans(n_clusters=cluster_num+1)
-        clusters_inc_model.fit(numpy_data, ml=ml, cl=cl)
-        #Don't need to sort these as avg is the only value being taken from this. 
-        cluster_inc_sil_arr = metrics.silhouette_samples(numpy_data, clusters_inc_model.labels_)
-        if cluster_num > 2:
-            clusters_dec_model = PCKMeans(n_clusters=cluster_num-1)
-            clusters_dec_model.fit(numpy_data, ml=ml, cl=cl)
-            #Don't need to sort these as avg is the only value being taken from this. 
-            cluster_dec_sil_arr = metrics.silhouette_samples(numpy_data, clusters_dec_model.labels_)
     else:
         model = PCKMeans(n_clusters=cluster_num)
         try:
@@ -235,7 +252,7 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
         avg_inc = sum(normalized_magic_inc)/len(normalized_magic_inc)
         if int(cluster_num) > 2:
             _, normalized_magic_dec = evaluate_model (clusters_dec_model, numpy_data, evaluation_algorithms, cluster_iter)
-            avg_dec = sum(cluster_dec_sil_arr)/len(cluster_dec_sil_arr)
+            avg_dec = sum(normalized_magic_dec)/len(normalized_magic_dec)
             # Increase clusters
             if avg_magic < avg_inc and avg_dec < avg_inc:
                 sil_change_value = 4
