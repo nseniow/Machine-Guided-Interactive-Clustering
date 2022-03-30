@@ -1,3 +1,4 @@
+from cmath import pi
 import sys
 import pickle
 from multiprocessing.pool import ThreadPool
@@ -237,6 +238,13 @@ def compute_questions(filename, cluster_iter, question_num, cluster_num, must_li
 
     #dump(obj, open(filename, mode))
     pickle.dump(model, open('interactive-constrained-clustering/src/model/finalized_model.sav', 'wb'))
+
+    #Temporary pickles from the case study so that we can go back if we forget things
+    pickle.dump(model, open('interactive-constrained-clustering/src/model/finalized_model_' + str(cluster_iter) + '.sav', 'wb'))
+    pickle.dump(numpy_data, open('interactive-constrained-clustering/src/model/numpy_data_' + str(cluster_iter) + '.sav', 'wb'))
+    if(int(cluster_iter) != 1):
+        pickle.dump(ml, open('interactive-constrained-clustering/src/model/ml_' + str(cluster_iter) + '.sav', 'wb'))
+        pickle.dump(cl, open('interactive-constrained-clustering/src/model/cl_' + str(cluster_iter) + '.sav', 'wb'))
 
     # ================Evaluate clustering model================
 
