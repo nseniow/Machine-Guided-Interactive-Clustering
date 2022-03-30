@@ -79,7 +79,6 @@ pyasn1-modules==0.2.8
 Pygments==2.10.0
 pynndescent==0.5.6
 pyod==0.9.7
-pyparsing==3.0.6
 pywin32==302
 PyYAML==6.0
 pyzmq==22.3.0
