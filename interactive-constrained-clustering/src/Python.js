@@ -1,8 +1,8 @@
 export class FormInput {
     filename = ""
-    questionsPerIteration = "5"
-    numberOfClusters = "5"
-    maxConstraintPercent = "5"
+    questionsPerIteration = ""
+    numberOfClusters = ""
+    maxConstraintPercent = ""
     ml = []
     cl = []
     unknown = []
