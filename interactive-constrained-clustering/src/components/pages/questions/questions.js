@@ -15,16 +15,16 @@ export const Questions = () => {
     const { promiseInProgress } = usePromiseTracker()
     function handleScatterPlotImagePassing(count) {
         try {
-            return require("../../../images/clusterImg" + count + ".png").default
+             return require("../../../images/clusterImg" + count + ".png")
         } catch (error) {
-            console.log("Image Error")
+            console.log("Image Error 1", error)
         }
     }
     function handleRadarPlotImagePassing(count) {
         try {
-            return require("../../../images/radarPlot" + count + ".png").default
+            return require("../../../images/radarPlot" + count + ".png")
         } catch (error) {
-            console.log("Image Error")
+            console.log("Image Error 2", error)
         }
     }
     return (
