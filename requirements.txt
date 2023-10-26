@@ -9,3 +9,5 @@ distython==0.0.3
 metrics
 seaborn
 umap
+anomatools==2.1
+pyod
