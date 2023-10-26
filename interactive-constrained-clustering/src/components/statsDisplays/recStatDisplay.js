@@ -19,7 +19,7 @@ class RecStatDisplay extends Component {
         var zip = new JSZip();
         var imageArr = []
         for (let index = 0; index < this.iterationCount; index++) {
-            imageArr.push(require("../../images/clusterImg" + (index + 1) + ".png").default)
+            imageArr.push(require("../../images/clusterImg" + (index + 1) + ".png"))
         }
         Promise.all(imageArr.map(function (url) {
             return new Promise(function (resolve, reject) {
