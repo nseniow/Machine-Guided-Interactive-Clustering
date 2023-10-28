@@ -1,13 +1,17 @@
+import { readCookies } from "./components/pages/landingPage/inputForm/cookieManager/readCookies"
+
+const cookies = readCookies();
 export class FormInput {
     filename = ""
-    questionsPerIteration = ""
-    numberOfClusters = ""
-    maxConstraintPercent = ""
+    questionsPerIteration = cookies.questionsPerIteration
+    numberOfClusters = cookies.numberOfClusters
+    maxConstraintPercent = cookies.maxConstraintPercent
     ml = []
     cl = []
     unknown = []
-    reduction_algorithm = ""
-    algorithmsUsed = []
+    reduction_algorithm = cookies.reduction_algorithm
+    checked = cookies.checked // for frontend (initally-checked Evaluation Algorithms)
+    algorithmsUsed = [] // for backend (checked-on-submission Evaluation Algorithms)
 }
 
 export class Stats {

@@ -4,7 +4,7 @@ import Papa from 'papaparse'
 import { AppContext } from "../../../../App"
 import { FormInput } from '../../../../Python'
 import { withRouter } from 'react-router-dom'
-import { Formik, Form } from "formik";
+import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 
 import Row from 'react-bootstrap/Row'
@@ -13,6 +13,8 @@ import { Card, Button } from 'react-bootstrap';
 
 import { MyTextInput, MyTextInputPercent } from "./textInput"
 import { MyCheckBoxInput } from "./checkBoxInput"
+
+import { updateCookies } from './cookieManager/updateCookies';
 
 class FileForm extends Component {
 
@@ -75,7 +77,7 @@ class FileForm extends Component {
                                         </div>
 
                                         <Formik
-                                            initialValues={new FormInput()}
+                                            initialValues={new FormInput()}                                           
                                             validationSchema={Yup.object({
                                                 questionsPerIteration: Yup.number().typeError("Must be a number.").required("Need this value to determine questions I can ask you."),
                                                 numberOfClusters: Yup.number().typeError("Must be a number.").required("Need this value to know the cluster amount based on your dataset."),
@@ -83,7 +85,8 @@ class FileForm extends Component {
                                             })}
                                             onSubmit={async values => {
                                                 values.filename = this.fileName
-                                                values.reduction_algorithm = document.getElementById("reduction_algorithm_select").value
+                                                values.reduction_algorithm = document.getElementById("reduction_algorithm").value
+
                                                 var algorithmsUsed = []
                                                 var checkboxes = document.querySelectorAll('input[type=checkbox]')
                                                 for (var i = 0; i < checkboxes.length; i++) {
@@ -94,6 +97,7 @@ class FileForm extends Component {
                                                     }
                                                 }
                                                 values.algorithmsUsed = algorithmsUsed
+
                                                 context.verifiedInput()
                                                 if (values.questionsPerIteration % 2 !== 0) {
                                                     values.questionsPerIteration = parseInt(values.questionsPerIteration) - 1
@@ -103,6 +107,9 @@ class FileForm extends Component {
                                                 uploadFile()
                                                 const { history } = this.props
                                                 history.push("/questions")
+                                                
+                                                // Set Cookies
+                                                updateCookies(values);
                                             }}
                                         >
                                             <Form>
@@ -136,11 +143,11 @@ class FileForm extends Component {
                                                 <Row>
                                                     <Col>
                                                         <div>Dimensionality Reduction Algorithm for Visualization</div>
-                                                        <select id="reduction_algorithm_select">
+                                                        <Field as="select" id="reduction_algorithm" name="reduction_algorithm">
                                                             <option value="TSNE">TSNE</option>
                                                             <option value="UMAP">UMAP</option>
                                                             <option value="PCA">PCA</option>
-                                                        </select>
+                                                        </Field>
                                                     </Col>
                                                 </Row>
                                                 <Row>
