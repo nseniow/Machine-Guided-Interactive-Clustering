@@ -67,8 +67,11 @@ class FileForm extends Component {
                             <div className="outerBorders w-75">
                                 <Card className="border border-dark">
                                     <Card.Body>
-                                        <Card.Title className="text-center">Input Your Information</Card.Title>
-                                        <label className="pt-2">Upload a Dataset</label>
+                                        <div class="d-flex justify-content-between">
+                                            <Card.Title className="text-center font-weight-bold">Input Your Information</Card.Title>
+                                            <button onClick={() => this.props.showInfo()} type="button" class="btn btn-info">?</button>
+                                        </div>
+                                        <label className="pt-2">Upload a Dataset:</label>
                                         <div className="input-group">
                                             <div className="custom-file">
                                                 <input type="file" className="custom-file-input" ref={this.el} accept=".csv" onChange={handleChange} />
@@ -116,7 +119,7 @@ class FileForm extends Component {
                                                 <Row>
                                                     <Col>
                                                         <MyTextInput
-                                                            label="Questions per Iteration"
+                                                            label="Questions per Iteration:"
                                                             name="questionsPerIteration"
                                                             placeholder="">
                                                         </MyTextInput>
@@ -125,7 +128,7 @@ class FileForm extends Component {
                                                 <Row>
                                                     <Col>
                                                         <MyTextInput
-                                                            label="Number of Clusters"
+                                                            label="Number of Clusters:"
                                                             name="numberOfClusters"
                                                             placeholder="">
                                                         </MyTextInput>
@@ -134,7 +137,7 @@ class FileForm extends Component {
                                                 <Row>
                                                     <Col>
                                                         <MyTextInputPercent
-                                                            label="Max Constraint Percentage"
+                                                            label="Max Constraint Percentage:"
                                                             name="maxConstraintPercent"
                                                             placeholder="">
                                                         </MyTextInputPercent>
@@ -142,7 +145,7 @@ class FileForm extends Component {
                                                 </Row>
                                                 <Row>
                                                     <Col>
-                                                        <div>Dimensionality Reduction Algorithm for Visualization</div>
+                                                        <div class="mt-3">Dimensionality Reduction Algorithm for Visualization:</div>
                                                         <Field as="select" id="reduction_algorithm" name="reduction_algorithm">
                                                             <option value="TSNE">TSNE</option>
                                                             <option value="UMAP">UMAP</option>
@@ -152,11 +155,12 @@ class FileForm extends Component {
                                                 </Row>
                                                 <Row>
                                                     <Col>
+                                                        <div class="mt-3"/>
                                                         Evaluation Algorithms:
                                                         <MyCheckBoxInput/>
                                                     </Col>
                                                 </Row>
-                                                <Row className="align-middle align-items-center text-center">
+                                                <Row className="align-middle align-items-center text-center mt-3">
                                                     <Button type="submit" className="mt-3">Start</Button>
                                                 </Row>
                                             </Form>

@@ -20,7 +20,7 @@ export const MyCheckBoxInput = (props) => {
                 <label style={{marginRight: '1em'}}>
                     <Field name="checked"  type="checkbox" class="radio" id="LOF" value="LOF"/> LOF  </label>
                 <label style={{marginRight: '1em'}}>
-                    <Field name="checked"  type="checkbox" class="radio" id="SIL" value="SIL"/> Sihlouette  </label>
+                    <Field name="checked"  type="checkbox" class="radio" id="SIL" value="SIL"/> Silhouette  </label>
             </div>
         </div>            
     );
