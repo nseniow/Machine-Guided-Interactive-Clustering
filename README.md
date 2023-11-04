@@ -4,3 +4,21 @@
 
 The data set used for our case study is Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX from https://www.unb.ca/cic/datasets/ids-2017.html
 This data was first preprossessed with the 2 python scripts in /Machine-Guided-Interactive-Clustering/datasets/
+
+# USER MANUAL
+(Ensure you are using Python3.8)
+To run this project, you will need to open two terminals. One to run the server, and another for the frontend.
+
+Terminal 1: run the server
+1. navigate to .../Machine-Guided-Interactive-Clustering
+2. run "pip install -r requirements.txt"
+3. run "npm install"
+4. run "npm start server"
+5. you should see a message similar to "server is running at port 4500"
+6. if you get errors similar to "missing module x", run "pip install x" and add x to the list in requirements.txt
+
+Terminal 2: run the frontend
+1. navigate to .../Machine-Guided-Interactive-Clustering/interactive-constrained-clustering
+2. run "npm install"
+3. run "npm start"
+4. the project should automatically open in your browser
